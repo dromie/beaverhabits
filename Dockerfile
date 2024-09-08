@@ -3,13 +3,14 @@ FROM python:3.12-slim
 LABEL maintainer="Henry Zhu <daya0576@gmail.com>"
 
 COPY requirements.txt .
+
+# libsass requires some features introduced by the recent C++ standard. 
+# You need a C++ compiler that support those features. 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc python3-dev python3-pip libxml2-dev libxslt1-dev zlib1g-dev g++ \
-    && pip install -r requirements.txt \
+    && apt-get install -y gcc g++ \
+    && pip install --no-cache-dir -r requirements.txt \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get purge -y --auto-remove gcc python3-dev python3-pip libxml2-dev libxslt1-dev zlib1g-dev g++
-
-
+    && apt-get purge -y --auto-remove gcc g++
 
 COPY . .
 CMD ["sh", "start.sh", "prd"]
