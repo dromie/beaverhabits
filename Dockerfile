@@ -1,16 +1,26 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+RUN python -m pip install --upgrade pip
+RUN python -m pip install --upgrade libsass
+
+FROM python:3.12-slim AS release
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+ARG VERSION
 
 LABEL maintainer="Henry Zhu <daya0576@gmail.com>"
+RUN python -m pip install --upgrade pip
 
-COPY requirements.txt .
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# libsass requires some features introduced by the recent C++ standard. 
-# You need a C++ compiler that support those features. 
-RUN apt-get update \
-    && apt-get install -y gcc g++ libffi-dev \
-    && pip install --no-cache-dir -r requirements.txt \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get purge -y --auto-remove gcc g++ libffi-dev
-
-COPY . .
+WORKDIR /app
+COPY start.sh .
+COPY beaverhabits ./beaverhabits
 CMD ["sh", "start.sh", "prd"]
